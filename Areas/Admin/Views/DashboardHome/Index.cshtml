@@ -1,0 +1,177 @@
+﻿@model List<Product>
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+@if (TempData["Add"] != null)
+{
+    <div id="tempDataMessage" class="alert alert-success">
+        @TempData["Add"]
+    </div>
+}
+
+@if (TempData["Update"] != null)
+{
+    <div id="tempDataMessage" class="alert alert-success">
+        @TempData["Update"]
+    </div>
+}
+
+<!-- Main Content Container -->
+<div class="container-fluid">
+    <div class="row" style="min-height: 100vh;">
+        <!-- Main Content -->
+        <main class="col-md-12 px-md-5" style="flex-grow: 1;">
+            <!-- Top Navbar -->
+            <nav class="navbar navbar-light bg-light justify-content-between mt-3 p-3 rounded shadow">
+                <a href="/Admin/Product/Create" class="navbar-brand">
+                    <h5 class="m-0"><i class="bi bi-patch-plus"></i> Add New Product</h5>
+                </a>
+                <form class="form-inline my-2 my-lg-0 ms-auto" action="/Admin/DashboardHome/Search" method="post">
+                    <div class="input-group">
+                        <input type="text" name="name" class="form-control" placeholder="Search for product...">
+                        <button class="btn btn-outline-secondary" type="submit">Search</button>
+                    </div>
+                </form>
+            </nav>
+
+            <!-- Statistics Cards -->
+            <div class="row mt-4 text-center">
+                <div class="col-md-3 mb-4">
+                    <div class="card shadow-lg">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-person-video2 text-danger"></i> Patient</h5>
+                            <p class="card-text">@ViewBag.patientCount</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="card shadow-lg">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-box-seam text-danger"></i> Product</h5>
+                            <p class="card-text">@ViewBag.productCount</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="card shadow-lg">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-list-task text-danger"></i> Category</h5>
+                            <p class="card-text">@ViewBag.CategoryCount</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="card shadow-lg">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-cart-check text-danger"></i> Orders</h5>
+                            <p class="card-text">@ViewBag.orderCount</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Table -->
+            <div class="card mt-4 shadow-lg">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Product Table</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-hover table-bordered table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>#</th>
+                                <th>Product Name</th>
+                                <th>Price</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>@item.ProductId</td>
+                                    <td>@item.ProductName</td>
+                                    <td>@item.Price</td>
+                                    <td>
+                                        <a asp-area="Admin" asp-controller="Product" asp-action="Edit" asp-route-id="@item.ProductId" class="btn btn-primary btn-sm">Edit</a>
+
+                                        <!-- Trigger Delete Modal -->
+                                        <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="@item.ProductId" data-name="@item.ProductName">
+                                            Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<!-- Bootstrap Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">Delete Confirmation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete <strong id="productName"></strong>?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="post" asp-area="Admin" asp-controller="Product" asp-action="Delete">
+                    <input type="hidden" name="id" id="deleteProductId" />
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // Trigger delete modal and pass data
+    const deleteModal = document.getElementById('deleteModal');
+    deleteModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget; // Button that triggered the modal
+        const productId = button.getAttribute('data-id'); // Extract product id
+        const productName = button.getAttribute('data-name'); // Extract product name
+
+        // Update modal content with product data
+        const modalBodyName = deleteModal.querySelector('#productName');
+        modalBodyName.textContent = productName;
+
+        // Set the form's hidden input value to productId
+        const deleteForm = deleteModal.querySelector('#deleteForm');
+        const deleteProductId = deleteForm.querySelector('#deleteProductId');
+        deleteProductId.value = productId;
+    });
+</script>
+
+<!-- CSS Styling -->
+<style>
+    .card {
+        border-radius: 15px;
+    }
+
+    .shadow-lg {
+        box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .navbar {
+        border-radius: 15px;
+    }
+
+    table thead {
+        border-radius: 15px;
+    }
+</style>

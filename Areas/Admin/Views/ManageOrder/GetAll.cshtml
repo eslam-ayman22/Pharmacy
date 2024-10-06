@@ -1,0 +1,160 @@
+﻿@model IEnumerable<Models.OrderItem>
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+@if (TempData["confirm"] != null)
+{
+    <div id="tempDataMessage" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> @TempData["confirm"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["error"] != null)
+{
+    <div id="tempDataMessage" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-exclamation-circle-fill me-2"></i> @TempData["error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["success"] != null)
+{
+    <div id="tempDataMessage" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> @TempData["success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="container mt-5">
+    <div class="card shadow-lg p-4">
+        <h1 class="text-center mb-4 display-6 fw-bold text-primary">Order Items</h1>
+
+        <table class="table table-striped table-hover align-middle">
+            <thead class="bg-primary text-white">
+                <tr>
+                    <th scope="col">Email</th>
+                    <th scope="col">Product Name</th>
+                    <th scope="col">Quantity</th>
+                    <th scope="col">Total Cost</th>
+                    <th scope="col">Device</th>
+                    <th scope="col" class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.Order?.ApplicationUser?.Email</td>
+                        <td>@item.Product?.ProductName</td>
+                        <td>@item.count</td>
+                        <td>@(item.cost * item.count) EGP</td>
+                        <td>@item.Device?.DeviceName</td>
+                        <td class="text-center">
+                            <a href="/Admin/ManageOrder/Confirm/@item.Id" class="btn btn-success btn-sm rounded-pill me-3">
+                                <i class="bi bi-check-circle"></i> Confirm
+                            </a>
+                            <a href="/Admin/ManageOrder/CancelOrder/@item.Id" class="btn btn-danger btn-sm rounded-pill">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    
+    .container {
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+
+    
+    .alert {
+        font-size: 16px;
+        padding: 15px;
+        margin-top: 20px;
+        border-radius: 10px;
+    }
+
+    .alert-success i, .alert-danger i {
+        font-size: 1.2rem;
+    }
+
+    .btn-close {
+        background: none;
+        border: none;
+        font-size: 1rem;
+        color: #000;
+        
+    }
+
+
+    h1 {
+        font-family: 'Poppins', sans-serif;
+        color: #0d6efd;
+        border-bottom: 2px solid #0d6efd;
+        display: inline-block;
+        padding-bottom: 10px;
+    }
+
+  
+    .table {
+        margin-top: 20px;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+        .table thead {
+            background-color: #0d6efd;
+            color: white;
+            font-weight: bold;
+        }
+
+        .table th, .table td {
+            text-align: center;
+            vertical-align: middle;
+            padding: 15px;
+            font-size: 14px;
+           
+        }
+
+
+    .btn-success, .btn-danger {
+        font-size: 14px;
+        padding: 6px 20px;
+        border-radius: 50px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        
+    }
+
+        .btn-success i, .btn-danger i {
+            margin-right: 8px;
+            font-size: 1.1rem;
+        }
+
+        .btn-success:hover, .btn-danger:hover {
+            opacity: 0.85;
+
+        }
+
+    
+    .card {
+        border: none;
+        border-radius: 15px;
+        padding: 30px;
+        background-color: #f8f9fa;
+    }
+
+        .card h1 {
+            margin-bottom: 30px;
+        }
+</style>

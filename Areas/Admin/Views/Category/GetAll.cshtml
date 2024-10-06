@@ -1,0 +1,139 @@
+﻿@model List<Category>
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+@if (TempData["update"] != null)
+{
+    <div id="tempDataMessage" class="alert alert-success">
+        @TempData["update"]
+    </div>
+}
+
+@if (TempData["add"] != null)
+{
+    <div id="tempDataMessage" class="alert alert-success">
+        @TempData["add"]
+    </div>
+}
+
+<div class="container-fluid">
+    <div class="row d-flex" style="min-height: 100vh;">
+        
+        <main class="col-md-12 ms-sm-auto col-lg-12 px-md-4">
+            <div class="container my-5">
+                <div class="card">
+                    <div class="card-header bg-danger text-white">
+                        <h3 class="text-center">All Categories</h3>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-hover table-bordered table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Category Name</th>
+                                    <th>Icon URL</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <th scope="row">@item.CategoryId</th>
+                                        <td>@item.CategoryName</td>
+                                        <td>@item.IconUrl</td>
+                                        <td>
+                                            <a asp-area="Admin" asp-controller="Category" asp-action="Edit" asp-route-id="@item.CategoryId" class="btn btn-primary btn-sm">Edit</a>
+
+                                            <!-- Trigger the modal for delete confirmation -->
+                                            <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="@item.CategoryId" data-name="@item.CategoryName">
+                                                Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Modal HTML Structure -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">Delete Confirmation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete the category: <strong id="categoryName"></strong>?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <!-- Form to submit delete action -->
+                <form id="deleteForm" method="post" asp-area="Admin" asp-controller="Category" asp-action="Delete">
+                    <input type="hidden" name="id" id="deleteCategoryId" />
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // This script runs when the delete button is clicked
+    const deleteModal = document.getElementById('deleteModal');
+    deleteModal.addEventListener('show.bs.modal', function (event) {
+        // Button that triggered the modal
+        const button = event.relatedTarget;
+
+        // Extract info from data-* attributes
+        const categoryId = button.getAttribute('data-id');
+        const categoryName = button.getAttribute('data-name');
+
+        // Update modal content
+        const modalBodyCategoryName = deleteModal.querySelector('#categoryName');
+        modalBodyCategoryName.textContent = categoryName;
+
+        // Set the form's hidden input with the category ID
+        const deleteForm = deleteModal.querySelector('#deleteForm');
+        const deleteCategoryId = deleteForm.querySelector('#deleteCategoryId');
+        deleteCategoryId.value = categoryId;
+    });
+</script>
+
+<!-- Custom Styling -->
+<style>
+    .card {
+        border-radius: 15px;
+    }
+
+    .shadow-lg {
+        box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-container {
+        width: 800px;
+        margin: 50px auto;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-custom {
+        background-color: #d9534f;
+        color: black;
+        border-radius: 25px;
+    }
+
+        .btn-custom:hover {
+            background-color: darkred;
+            color: white;
+        }
+</style>
