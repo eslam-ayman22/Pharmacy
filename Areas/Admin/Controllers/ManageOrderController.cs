@@ -2,7 +2,9 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Models;
+using Stripe;
 using System.Threading.Tasks;
 
 namespace pharmacy.Areas.Admin.Controllers
@@ -11,42 +13,57 @@ namespace pharmacy.Areas.Admin.Controllers
     public class ManageOrderController : Controller
     {
         private readonly IOrderItemRepository _orderItemRepository;
+        private readonly IOrderRepository _orderRepository;
         private readonly EmailService _emailService;
-        // private readonly IPaymentService _paymentService;
+        
 
-        public ManageOrderController(IOrderItemRepository orderItemRepository, EmailService _emailService) //IPaymentService _paymentService )
+        public ManageOrderController(IOrderItemRepository orderItemRepository, EmailService _emailService, IOrderRepository orderRepository)
         {
             this._orderItemRepository = orderItemRepository;
             this._emailService = _emailService;
-            //this._paymentService = _paymentService;
+            _orderRepository = orderRepository;
             
-
         }
 
         public IActionResult GetAll()
         {
-            var orderItems = _orderItemRepository.Get(null, e => e.Product, e => e.Order, e => e.Device , e=> e.Order.ApplicationUser);
-            return View(orderItems);
+            var orders = _orderRepository.Get(
+             null,
+             query => query.Include(o => o.OrderItems).ThenInclude(oi => oi.Product),
+             query => query.Include(o => o.OrderItems).ThenInclude(oi => oi.Device),
+             query => query.Include(o => o.ApplicationUser)
+         );
+
+            return View(orders);
         }
 
-
-        //Confirm Order
+       // Confirm Order
         public IActionResult Confirm(int id)
         {
-            // الحصول على معلومات الاوردر
-            var orderItem = _orderItemRepository.GetOne(e => e.Id == id, e => e.Product, e => e.Order, e =>e.Order.ApplicationUser);
 
-            if (orderItem != null)
+            var order = _orderRepository.Get(
+            e=>e.OrderId==id ,
+            query => query.Include(o => o.OrderItems).ThenInclude(oi => oi.Product),
+            query => query.Include(o => o.OrderItems).ThenInclude(oi => oi.Device),
+            query => query.Include(o => o.ApplicationUser)
+           ).FirstOrDefault();
+
+            if (order != null)
             {
-               
-                // إرسال رسالة التأكيد إلى البريد الإلكتروني
-                string toEmail = orderItem.Order?.ApplicationUser?.Email; 
-                string subject = $"Order Confirmation - Order #{orderItem.OrderId}";
-                string body = $"Dear {orderItem.Order?.ApplicationUser?.UserName},<br/><br/>" +
-                              $"Your order for {orderItem.Product?.ProductName} has been confirmed.<br/>" +
-                              $"Order ID: {orderItem.OrderId}<br/>" +
-                              $"Total Price: {orderItem.cost * orderItem.count}<br/>" +
-                              $"Quantity : {orderItem.count}<br/>" +
+                
+                string toEmail = order.ApplicationUser?.Email;
+                string subject = $"Order Confirmation - Order #{order.OrderId}";
+
+                
+                var totalCost = order.OrderItems.Sum(item => item.cost * item.count);
+                var itemList = string.Join("<br/>", order.OrderItems.Select(item =>
+                    $"{item.Product?.ProductName} - Quantity: {item.count} - Price: {item.cost * item.count} EGP"));
+
+                string body = $"Dear {order.ApplicationUser?.UserName},<br/><br/>" +
+                              $"Your order has been confirmed.<br/>" +
+                              $"Order ID: {order.OrderId}<br/>" +
+                              $"Total Price: {totalCost} EGP<br/>" +  
+                              $"Items:<br/>{itemList}<br/>" +
                               $"Thank you for shopping with us!";
 
                 _emailService.SendOrderConfirmationEmail(toEmail, subject, body);
@@ -58,35 +75,29 @@ namespace pharmacy.Areas.Admin.Controllers
         }
 
 
-        ////Cancel Order
-        //public IActionResult CancelOrder(int orderitemId)
-        //{
-        //    // الحصول على معلومات الطلب
-        //    var orderitem = _orderItemRepository.GetOne(e => e.Id == orderitemId, e => e.Order);
+        public IActionResult CancelOrder(int id)
+        {
+            var order = _orderRepository.GetOne(e => e.OrderId == id, e => e.ApplicationUser, e => e.OrderItems);
 
-        //    if (orderitem != null && !string.IsNullOrEmpty(orderitem.Order.PaymentIntentId))
-        //    {
-        //        // استرداد الأموال باستخدام خدمة المدفوعات
-        //        var refund = _paymentService.RefundPayment(orderitem.Order.PaymentIntentId);
+            if (order != null)
+            {
+                _orderRepository.Delete(order);
+                _orderRepository.commit();
+                var customerEmail = order.ApplicationUser?.Email; 
+                string subject = $"Order #{order.OrderId} Cancellation";
+                string body = $"Dear {order.ApplicationUser?.UserName},<br/><br/>" +
+                                  $"Your order has been canceled<br/>" +
+                                  $"Order ID: {order.OrderId}<br/><br/>" +
+                                  "Thank you for using our services.";
 
-        //        if (refund != null && refund.Status == "succeeded")
-        //        {
-        //            TempData["success"] = "Order has been cancelled and refund has been processed successfully.";
-        //            return RedirectToAction("GetAll");
-        //        }
-        //        else
-        //        {
-        //            TempData["error"] = "Failed to process refund.";
-        //            return RedirectToAction("GetAll");
-        //        }
-        //    }
+                    _emailService.SendOrderConfirmationEmail(customerEmail, subject, body);
+                    
+                     TempData["confirm"] = "Order Canceled and email sent successfully.";
+                   
+                    return RedirectToAction("GetAll");
+            }
 
-        //    TempData["error"] = "Order not found or has no payment intent.";
-        //    return RedirectToAction("GetAll");
-        //}
-
-
-
-
+            return NotFound();
+        }
     }
 }

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Models;
 using Newtonsoft.Json;
+using Stripe;
 using Stripe.Checkout;
 
 namespace pharmacy.Areas.Patient.Controllers
@@ -143,10 +144,13 @@ namespace pharmacy.Areas.Patient.Controllers
 
                     ApplicationUserId = userId,
                     orderDate = DateTime.Now,
+                   
                     OrderStatusID = 1,
+                   
                    // totalprice = (decimal)TempData["Total"],
                     OrderItems = new List<OrderItem>() // Initialize list for order items
                 };
+                
 
                 // Add items from the shopping cart to the order
                 foreach (var cartItem in cartItemsDb)
